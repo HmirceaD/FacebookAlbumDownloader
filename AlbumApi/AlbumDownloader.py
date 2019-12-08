@@ -5,9 +5,10 @@ import os
 import requests
 import sys
 import logging
+import math
+import time
 
 pause = 0
-ROWSPERLOAD=7
 
 def check_if_output_folder_exists(output_folder_path):
     if os.path.isdir(output_folder_path):
@@ -15,7 +16,12 @@ def check_if_output_folder_exists(output_folder_path):
     else:
         return False
 
-def download_images_from_album(albums_list, output_folder_path):
+def get_num_of_scrolls(num_of_images):
+    ROWSPERLOAD = 7
+    COLSPERROW = 4
+    return math.floor(num_of_images / (ROWSPERLOAD * COLSPERROW))
+
+def download_images_from_album(albums_list=[], output_folder_path="", num_of_images=10):
 
     if check_if_output_folder_exists(output_folder_path):
         logging.info("Beginning Download")
@@ -23,11 +29,13 @@ def download_images_from_album(albums_list, output_folder_path):
         logging.error("Folder does not exist, please create it and try again")
         sys.exit(0)
 
+    num_of_scrolls = get_num_of_scrolls(num_of_images)
+
     browser = webdriver.Chrome()
 
     for album in albums_list:
         browser.get(album)
-        image_links_list = get_image_links(browser)
+        image_links_list = get_image_links(browser, num_of_images, num_of_scrolls)
         scontent_list = compile_scontent_list(image_links_list, browser)
         download_images_from_scontent(scontent_list, output_folder_path)
 
@@ -38,15 +46,24 @@ def find(driver):
     else:
         return False
 
-def get_image_links(browser):
+def get_image_links(browser, num_of_images, num_of_scrolls):
+
+    if int(num_of_scrolls) > 0:
+        for i in range(0, int(num_of_scrolls)):
+            browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            time.sleep(3)
+
+
     list_links = browser.find_elements_by_class_name("_2eea")
     links = []
-    for link in list_links:
+
+    for link in list_links[:num_of_images]:
         links.append(link.find_element_by_css_selector('a').get_attribute('href'))
 
     return links
 
 def compile_scontent_list(image_links_list, browser):
+
     scontent_list = []
     for image_link in image_links_list:
 
@@ -81,19 +98,7 @@ album_list = ['https://www.facebook.com/pg/DankMemesGang/photos/?tab=album&album
               'https://www.facebook.com/pg/occreamystolenmemes/photos/?tab=album&album_id=1983141641970216',
               'https://www.facebook.com/pg/occreamystolenmemes/photos/?tab=album&album_id=1983128928638154']
 
-download_images_from_album(album_list, 'E:\Programare\Freelance\FacebookAlbumDownloader\meme')
-
-'''
-startTime = time.time()
-for i in range(0,65):
-	browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-	time.sleep(3)'''
-
-
-'''
-elems = browser.find_elements_by_class_name("_2eea")
-for elem in elems:
-    print(elem)'''
+download_images_from_album(album_list, 'E:\Programare\Freelance\FacebookAlbumDownloader\meme', 89)
 
 '''lastHeight = browser.execute_script("return document.body.scrollHeight")
 while True:
