@@ -3,16 +3,33 @@ from selenium.webdriver.support.ui import WebDriverWait
 import shutil
 import os
 import requests
+import sys
+import logging
+
 pause = 0
 ROWSPERLOAD=7
 
-def download_images_from_album():
-    browser = webdriver.Chrome()
-    browser.get('https://www.facebook.com/pg/occreamystolenmemes/photos/?tab=album&album_id=1983128928638154&ref=page_internal')
+def check_if_output_folder_exists(output_folder_path):
+    if os.path.isdir(output_folder_path):
+        return True
+    else:
+        return False
 
-    image_links_list = get_image_links(browser)
-    scontent_list = compile_scontent_list(image_links_list, browser)
-    download_images_from_scontent(scontent_list)
+def download_images_from_album(albums_list, output_folder_path):
+
+    if check_if_output_folder_exists(output_folder_path):
+        logging.info("Beginning Download")
+    else:
+        logging.error("Folder does not exist, please create it and try again")
+        sys.exit(0)
+
+    browser = webdriver.Chrome()
+
+    for album in albums_list:
+        browser.get(album)
+        image_links_list = get_image_links(browser)
+        scontent_list = compile_scontent_list(image_links_list, browser)
+        download_images_from_scontent(scontent_list, output_folder_path)
 
 def find(driver):
     element = driver.find_element_by_class_name("_1ktf")
@@ -59,6 +76,12 @@ def download_images_from_scontent(scontent_list=[], output_foler_location=""):
             shutil.copyfileobj(resp.raw, local_file)
 
         del resp
+
+album_list = ['https://www.facebook.com/pg/DankMemesGang/photos/?tab=album&album_id=713208772115898',
+              'https://www.facebook.com/pg/occreamystolenmemes/photos/?tab=album&album_id=1983141641970216',
+              'https://www.facebook.com/pg/occreamystolenmemes/photos/?tab=album&album_id=1983128928638154']
+
+download_images_from_album(album_list, 'E:\Programare\Freelance\FacebookAlbumDownloader\meme')
 
 '''
 startTime = time.time()
